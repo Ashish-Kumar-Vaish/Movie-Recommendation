@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Movie Recommender</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+    <link
+      href="https://fonts.googleapis.com/css?family=Roboto&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+
+  <body class="dark-mode">
+    <div class="container">
+      <h1>Movie Recommendation System</h1>
+
+      <button id="themeToggle" aria-label="Toggle Theme">☀️</button>
+
+      <form method="POST" class="search-form">
+        <input
+          type="text"
+          name="movie"
+          placeholder="Enter a movie name"
+          required
+          value="{{ user_input }}"
+        />
+        <button type="submit">Recommend</button>
+      </form>
+
+      {% if recommendations %}
+      <div class="results">
+        <h2>Top Recommendations for "<span>{{ user_input }}</span>"</h2>
+
+        <div id="movie-grid">
+          {% for movie in recommendations %}
+          <div class="movie-card full-width">
+            <div class="movie-rank">{{ loop.index }}.</div>
+            <div class="movie-content">
+              <h3>{{ movie.title }}</h3>
+              <p><strong>Genres:</strong> {{ movie.genres }}</p>
+              <p><strong>Director:</strong> {{ movie.director }}</p>
+              <p><strong>Cast:</strong> {{ movie.cast }}</p>
+              <p>
+                <strong>Rating:</strong> {{ movie.vote_average }} ⭐ ({{
+                movie.vote_count }} votes)
+              </p>
+              <p class="movie-overview">{{ movie.overview }}</p>
+            </div>
+          </div>
+
+          {% endfor %}
+        </div>
+
+        <button id="loadMoreBtn">Load More</button>
+      </div>
+
+      {% elif user_input %}
+      <p class="no-result">No matches found. Try a different title.</p>
+      {% endif %}
+    </div>
+
+    <script>
+      const body = document.body;
+      const darkClass = "dark-mode";
+      const toggleButton = document.getElementById("themeToggle");
+      const storedTheme = localStorage.getItem("theme");
+
+      if (storedTheme === "dark" || !storedTheme) {
+        body.classList.add(darkClass);
+        toggleButton.textContent = "☀️";
+      } else {
+        body.classList.remove(darkClass);
+        toggleButton.textContent = "🌙";
+      }
+
+      toggleButton.addEventListener("click", () => {
+        body.classList.toggle(darkClass);
+        if (body.classList.contains(darkClass)) {
+          toggleButton.textContent = "☀️";
+          localStorage.setItem("theme", "dark");
+        } else {
+          toggleButton.textContent = "🌙";
+          localStorage.setItem("theme", "light");
+        }
+      });
+
+      let offset = 20;
+      const limit = 20;
+      const maxRecs = 200;
+      const movieName = "{{ user_input }}";
+      const loadMoreBtn = document.getElementById("loadMoreBtn");
+      const movieGrid = document.getElementById("movie-grid");
+
+      if (loadMoreBtn) {
+        loadMoreBtn.addEventListener("click", () => {
+          fetch(
+            `/load_more?movie=${encodeURIComponent(
+              movieName
+            )}&offset=${offset}&limit=${limit}`
+          )
+            .then((res) => res.json())
+            .then((data) => {
+              if (data.length === 0) {
+                loadMoreBtn.style.display = "none";
+                return;
+              }
+              data.forEach((movie, idx) => {
+                if (offset + idx + 1 > maxRecs) {
+                  loadMoreBtn.style.display = "none";
+                  return;
+                }
+
+                const card = document.createElement("div");
+                card.className = "movie-card full-width";
+                card.innerHTML = `
+            <div class="movie-rank">${offset + idx + 1}.</div>
+            <div class="movie-content">
+              <h3>${movie.title}</h3>
+              <p><strong>Genres:</strong> ${movie.genres}</p>
+              <p><strong>Director:</strong> ${movie.director}</p>
+              <p><strong>Rating:</strong> ${movie.vote_average} ⭐ (${
+                  movie.vote_count
+                } votes)</p>
+              <p class="movie-overview">${movie.overview}</p>
+            </div>
+          `;
+                movieGrid.appendChild(card);
+              });
+              offset += limit;
+            });
+        });
+      }
+    </script>
+  </body>
+</html>
