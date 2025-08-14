@@ -10,8 +10,8 @@ The app suggests similar movies based on genres, keywords, cast, crew, and more,
 
 ## Features
 - Content-based filtering using TF-IDF and cosine similarity
-- Search by movie title with fuzzy matching
-- "Load More" button more results
+- Search by movie title for recommendations
+- "Load More" button loads more results
 - Dark/Light mode toggle
 - Responsive design with custom CSS
 
